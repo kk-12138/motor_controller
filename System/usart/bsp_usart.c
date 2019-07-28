@@ -174,7 +174,7 @@ void USART_SendHalfWord(USART_TypeDef *pUSARTx, uint16_t data)
   temp_l = data & 0XFF;
 
   /* Sends high eight bits of data. */
-  USART_SendData(pUSARTx, temp_h);	
+  USART_SendData(pUSARTx, temp_h);
   while (USART_GetFlagStatus(pUSARTx, USART_FLAG_TXE) == RESET);
 
   /* Sends low eight bits of data. */

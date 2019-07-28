@@ -3,13 +3,14 @@
   * @author  WANG Kyle
   * @email   x-box361@live.com
   * @version V0.1
-  * @date    1-June-2019
+  * @date    28-July-2019
   * @brief   Basic development environment.
   */
 
 #include "stm32f4xx.h"
 #include "bsp_systick.h"
 #include "bsp_usart.h"
+#include "imu_usart6.h"
 
 int main(void)
 {
@@ -17,13 +18,10 @@ int main(void)
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
 
   USART_Config();
+  IMU_USART_Config();
 
-  printf("just a UART test...\n");
+  printf("Just to test IMU data tansfer\n");
   DelayMs(1000);
 
-  while(1)
-  {
-    printf("You will receive this msg once per second\n");
-    DelayMs(1000);
-  }
+  imu_test();
 }

@@ -3,10 +3,17 @@ Hardware:<br>
 `CPU`: STM32 F407VET6<br>
 `Oscillator`: 8 MHz<br>
 
+`IMU`: Connected to USART6
+>GND ----> GND<br>
+>VCC ----> 3.3V<br>
+>RXD ----> PC6<br>
+>TXD ----> PC7<br>
+
 Software:<br>
 --------
 * Basic delay function using systick;<br>
 * Debug port using USART1(GPIOA_9: TX; GPIOA_10: RX);<br>
+* Simple IMU data transfer test using USART6(GPIOC_6: TX; GPIOC_7: RX);<br>
 
 IDE:<br>
 --------
