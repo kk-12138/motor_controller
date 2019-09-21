@@ -3,7 +3,7 @@
   * @author  WANG Kyle
   * @email   x-box361@live.com
   * @version V0.1
-  * @date    27-July-2019
+  * @date    21-September
   * @brief   This file provides the functions of IMU. 
   */
 
@@ -17,35 +17,19 @@ imu_acc_t imu_acc;
 imu_gyro_t imu_gyro;
 imu_angle_t imu_angle;
 
- /**
-  * @brief  Configs the NVIC.
-  * @param  None
-  * @retval None
-  */
-//static void NVIC_Configuration(void)
-//{
-//  NVIC_InitTypeDef NVIC_InitStructure;
-
-//  /* Enable the USARTx Interrupt */
-//  NVIC_InitStructure.NVIC_IRQChannel = IMU_USART_IRQ;
-//  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-//  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
-//  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-
-//  NVIC_Init(&NVIC_InitStructure);
-//}
+uint8_t imu_rx_buf[IMU_RX_BUF_SIZE] = {0x0};
 
  /**
   * @brief  Configs the USART6 parameter.
   * @param  None
   * @retval None
   */
-void IMU_USART_Config(void)
+static void USART_ImuConfig(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
   USART_InitTypeDef USART_InitStructure;
 
-  /* Enable GPIOA and USART1 clock. */
+  /* Enable GPIOA and USART6 clock. */
   RCC_AHB1PeriphClockCmd(IMU_USART_RX_GPIO_CLK|IMU_USART_TX_GPIO_CLK,ENABLE);
   RCC_APB2PeriphClockCmd(IMU_USART_CLK, ENABLE);
 
@@ -96,17 +80,65 @@ void IMU_USART_Config(void)
 
   USART_Init(IMU_USART, &USART_InitStructure); 
 
-//  /* Config NVIC. */
-//  NVIC_Configuration();
-
-//  /* Enable USART interrupt. */
-//  USART_ITConfig(IMU_USART, USART_IT_RXNE, ENABLE);
-
   /* Enable USART. */
   USART_Cmd(IMU_USART, ENABLE);
 }
 
-void imu_test(void)
+static void DMA_ImuConfig(void)
+{
+  DMA_InitTypeDef   DMA_InitStructure;
+  NVIC_InitTypeDef  NVIC_InitStructure;
+
+  /* Enable the DMA clock */
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
+
+  DMA_DeInit(DMA2_Stream1);
+
+  /* Configure DMA Initialization Structure */
+  DMA_InitStructure.DMA_PeripheralBaseAddr  = (uint32_t)&(USART6->DR);
+  DMA_InitStructure.DMA_BufferSize          = IMU_RX_BUF_SIZE;
+  DMA_InitStructure.DMA_PeripheralInc       = DMA_PeripheralInc_Disable;
+  DMA_InitStructure.DMA_MemoryInc           = DMA_MemoryInc_Enable;
+  DMA_InitStructure.DMA_PeripheralDataSize  = DMA_PeripheralDataSize_Byte;
+  DMA_InitStructure.DMA_MemoryDataSize      = DMA_MemoryDataSize_Byte;
+//  DMA_InitStructure.DMA_Mode                = DMA_Mode_Normal;
+  DMA_InitStructure.DMA_Mode                = DMA_Mode_Circular;
+  DMA_InitStructure.DMA_Priority            = DMA_Priority_High;
+  DMA_InitStructure.DMA_FIFOMode            = DMA_FIFOMode_Disable;         
+  DMA_InitStructure.DMA_FIFOThreshold       = DMA_FIFOThreshold_HalfFull;
+  DMA_InitStructure.DMA_MemoryBurst         = DMA_MemoryBurst_Single;
+  DMA_InitStructure.DMA_PeripheralBurst     = DMA_PeripheralBurst_Single;
+
+  /* Configure RX DMA: DMA2_Stream1 Channel_5*/
+  DMA_InitStructure.DMA_Channel             = DMA_Channel_5;
+  DMA_InitStructure.DMA_DIR                 = DMA_DIR_PeripheralToMemory;
+  DMA_InitStructure.DMA_Memory0BaseAddr     = (uint32_t)&imu_rx_buf;
+  DMA_Init(DMA2_Stream1, &DMA_InitStructure);
+
+  /* Configure the NVIC initialization structure of RX DMA.*/
+  NVIC_InitStructure.NVIC_IRQChannel                   = DMA2_Stream1_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 1;
+  NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+
+  /* Enable RX DMA. */
+//  DMA_Cmd(DMA2_Stream1, ENABLE);
+  /* Disable the RX DMA here and enable it after getting the IMU header data. */
+  DMA_Cmd(DMA2_Stream1, DISABLE);
+//  USART_DMACmd(USART6, USART_DMAReq_Rx, ENABLE);
+  USART_DMACmd(USART6, USART_DMAReq_Rx, DISABLE); 
+
+  DMA_ITConfig(DMA2_Stream1, DMA_IT_TC, ENABLE);
+  DMA_ClearITPendingBit(DMA2_Stream1, DMA_IT_TCIF1);
+}
+
+void USART_ImuInit(void)
+{
+  USART_ImuConfig();
+  DMA_ImuConfig();
+}
+void reset_imu(void)
 {
   static uint8_t rx_buffer[512];
   static uint8_t count;
@@ -132,8 +164,11 @@ void imu_test(void)
 
       if (rx_buffer[10] == sum)
       {
-        parse_imu_data(rx_buffer);
-        count = 0;
+        /* Got the IMU deater data, enable the RX DMA. */
+        DMA_Cmd(DMA2_Stream1, ENABLE);
+        USART_DMACmd(USART6, USART_DMAReq_Rx, ENABLE);
+
+        return;
       }
       else
       { 

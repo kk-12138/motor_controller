@@ -40,7 +40,7 @@
 #define DEBUG_USART_IRQHandler                  USART1_IRQHandler
 #define DEBUG_USART_IRQ                         USART1_IRQn
 
-void USART_Config(void);
+void USART_SysDebugInit(void);
 
 void USART_SendByte(USART_TypeDef *pUSARTx, uint8_t data);
 void USART_SendArray(USART_TypeDef *pUSARTx, uint8_t *array, uint16_t num);

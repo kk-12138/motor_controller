@@ -32,7 +32,7 @@ static void NVIC_Configuration(void)
   * @param  None
   * @retval None
   */
-void USART_Config(void)
+void USART_SysDebugInit(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
   USART_InitTypeDef USART_InitStructure;

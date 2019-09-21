@@ -13,7 +13,7 @@ Software:<br>
 --------
 * Basic delay function using systick;<br>
 * Debug port using USART1(GPIOA_9: TX; GPIOA_10: RX);<br>
-* Simple IMU data transfer test using USART6(GPIOC_6: TX; GPIOC_7: RX);<br>
+* Simple IMU data transfer test using USART6 RX DMA(GPIOC_6: TX; GPIOC_7: RX);<br>
 
 IDE:<br>
 --------

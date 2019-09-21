@@ -28,8 +28,11 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+#include <string.h>
+
 #include "stm32f4xx_it.h"
 #include "bsp_usart.h"
+#include "imu_usart6.h"
 
 /** @addtogroup STM32F429I_DISCOVERY_Examples
   * @{
@@ -38,6 +41,11 @@
 /** @addtogroup FMC_SDRAM
   * @{
   */ 
+
+extern uint8_t imu_rx_buf[];
+extern uint8_t imu_data[];
+extern int imu_cpy_flag;
+extern int imu_display_flag;
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -162,6 +170,23 @@ void DEBUG_USART_IRQHandler(void)
   }
 }
 
+/**
+  * @brief  This function handles USART6 RX DMA interrupt request.
+  * @param  None
+  * @retval None
+  */
+void DMA2_Stream1_IRQHandler(void)
+{
+  if (DMA_GetITStatus(DMA2_Stream1, DMA_IT_TCIF1) == SET)
+  {
+    DMA_ClearFlag(DMA2_Stream1, DMA_FLAG_TCIF1);
+
+    imu_cpy_flag = 0;
+    memcpy(imu_data, imu_rx_buf, 11);
+    imu_cpy_flag = 1;
+    imu_display_flag = 1;
+  }
+}
 /**
   * @}
   */ 

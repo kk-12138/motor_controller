@@ -3,7 +3,7 @@
   * @author  WANG Kyle
   * @email   x-box361@live.com
   * @version V0.1
-  * @date    27-July-2019
+  * @date    21-September
   * @brief   This file provides the functions of IMU. 
   */
 
@@ -74,12 +74,13 @@ typedef struct {
 #define IMU_USART_IRQHandler                  USART6_IRQHandler
 #define IMU_USART_IRQ                         USART6_IRQn
 
+#define IMU_RX_BUF_SIZE                       11
 /* Exported functions --------------------------------------------------------*/ 
 
-void IMU_USART_Config(void);
+void USART_ImuInit(void);
 
+void reset_imu(void);
 void parse_imu_data(uint8_t *data_buf);
-void imu_test(void);
 
 #ifdef __cplusplus
 }
